@@ -2,6 +2,8 @@
 
 Manage your self-hosted [Mealie](https://mealie.io) recipe server from the terminal.
 
+There is also a `SKILL.md` for use in [Openclaw](https://openclaw.ai/) .
+
 List, search, and display recipes; import recipes from any website URL;
 manage your meal plan and shopping lists; browse categories and cookbooks –
 all without opening a browser.
