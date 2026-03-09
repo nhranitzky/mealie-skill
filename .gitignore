@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Virtual environment
+.venv/
+
+# uv
+uv.lock
+
+# Build artifacts
+*.zip
+*.skill
+
+# macOS
+.DS_Store
+
+# Credentials (never commit)
+.env

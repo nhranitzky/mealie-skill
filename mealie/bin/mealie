@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# =============================================================================
+# mealie – Mealie recipe server CLI launcher
+#
+# Runs the Python scripts via `uv run --project`, ensuring the correct
+# virtual environment and dependencies are always used.
+#
+# MEALIE_URL and MEALIE_API_TOKEN are loaded from .env in the project root
+# by the Python scripts – they are NEVER passed on the command line.
+#
+# Usage:
+#   mealie list      [--search …] [--category …] [--tag …]
+#   mealie detail    <slug-or-name>
+#   mealie search    <query>
+#   mealie import    <url>    [--tag …] [--open]
+#   mealie import-bulk <file> [--tag …]
+#   mealie random    [--category …] [--tag …] [--count N] [--open]
+#   mealie mealplan  show|add|remove|random
+#   mealie shopping  lists|show|add|recipe|clear
+#   mealie organizers categories|tags|cookbooks|cookbook
+#   mealie stats
+#   mealie --help
+# =============================================================================
+
+set -euo pipefail
+
+# Resolve the real directory of this script, following symlinks
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+
+# Project root is one level above bin/
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+exec uv run --project "$PROJECT_ROOT" --directory "${PROJECT_ROOT}" python -m scripts.main "$@"
