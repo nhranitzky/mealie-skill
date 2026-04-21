@@ -3,25 +3,27 @@ include .env
 SKILL_DIR  := mealie	
 SKILL_NAME := $(notdir $(abspath $(SKILL_DIR)))
 VERSION=1.0
+DIST_DIR      := dist
 SKILL_ZIP_NAME := $(SKILL_NAME).skill_v$(VERSION).zip
- 
 
 
-.PHONY: install  lint package clean
+.PHONY: install lint package clean
 
 install:          ## Install all dependencies (dev + skill)
 	(cd $(SKILL_DIR) && uv sync)
 
- 
 lint:             ## Check code style
 	uv run ruff check $(SKILL_DIR)/scripts
 
-package:          ## Build .skill zip
+package:          ## Build .skill zip into dist/
+	mkdir -p $(DIST_DIR)
 	(cd $(dir $(abspath $(SKILL_DIR))) && \
-	 zip -r $(SKILL_ZIP_NAME) $(SKILL_NAME)/ -x *.venv*  -x *.zip  -x "*/__pycache__/*"  -x .pytest_cache -x *.lock -x *.DS_Store) 
-	@echo "Created: $(SKILL_ZIP_NAME)"
+	 zip -r $(SKILL_ZIP_NAME) $(SKILL_NAME)/ -x "*.venv*" -x "*.zip" -x "*/__pycache__/*" -x ".pytest_cache" -x "*.lock" -x "*.DS_Store" -x "*/.ruff_cache/*")
+	mv $(SKILL_ZIP_NAME) $(DIST_DIR)/
+	@echo "Created: $(DIST_DIR)/$(SKILL_ZIP_NAME)"
 
 clean:            ## Remove build artifacts
+	rm -rf $(DIST_DIR)
 	rm -f *.skill *.zip
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type d -name .pytest_cache -exec rm -rf {} +
@@ -29,8 +31,8 @@ clean:            ## Remove build artifacts
 	rm -rf $(SKILL_DIR)/.venv  
 	rm $(SKILL_DIR)/uv.lock	
 
-deploy:
-	scp  ${SKILL_ZIP_NAME} ${TARGET}:${REMOTE_DOWNLOADS_DIR}
+deploy:           ## Deploy skill zip to Openclaw device
+	scp $(DIST_DIR)/$(SKILL_ZIP_NAME) $(TARGET):$(REMOTE_DOWNLOADS_DIR)
 	  
 
 

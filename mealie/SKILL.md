@@ -1,7 +1,7 @@
 ---
 name: mealie
 description: Interact with a self-hosted Mealie recipe server via its REST API. Use this skill whenever the user wants to list, search, or browse recipes; view a specific recipe (ingredients, instructions, metadata); import a recipe from a website URL; manage the meal plan (view, add, remove entries); manage shopping lists (view, add items, link recipes); or browse categories, tags, and cookbooks.
-licence: MIT
+license: MIT
 metadata: { "openclaw": {"emoji": "🍽️" } }
 ---
 
@@ -12,10 +12,11 @@ Manage a self-hosted [Mealie](https://mealie.io) instance from the terminal.
 ## ⚠️ Credential Security
 
 The URL and Token are provided by the environment as environment variables.
-Openclaw must **never** display, log, or relay these values. They flow only:
-`env → Python process → Mealie HTTPS request`.
+ **never** display, log, or relay these values. 
 
 ## Available Commands
+
+`{baseDir}` is the directory of this skill file.
 
 | Command | User asks |
 |---------|-------------|
@@ -65,7 +66,7 @@ All commands support `--json` for machine-readable output.
 {baseDir}/bin/mealie import https://www.chefkoch.de/rezepte/123/Spaghetti.html --tag Italian
 {baseDir}/bin/mealie import https://example.com/recipe --open
 {baseDir}/bin/mealie import-json recipe.json --tag Imported --open
-{baseDir}/bin/mealie import-json export.jsonld --dry-run
+{baseDir}/bin/mealie import-json export.jsonld --tag Vegan
 {baseDir}/bin/mealie import-json page.html --json
 
 # Meal planning

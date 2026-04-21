@@ -15,7 +15,7 @@ import os
 import sys
 import textwrap
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
 import requests
  
@@ -130,7 +130,8 @@ class MealieClient:
             data = self.get(path, params=p)
             chunk = data.get("items", [])
             items.extend(chunk)
-            if len(items) >= data.get("total", 0):
+            total = data.get("total")
+            if total is None or len(items) >= total or len(chunk) == 0:
                 break
             p["page"] += 1
         return items
@@ -140,15 +141,20 @@ class MealieClient:
         return self._base
 
 
-def _http_error(exc: requests.HTTPError) -> None:
+class MealieHTTPError(Exception):
+    def __init__(self, status_code: int, message: str) -> None:
+        self.status_code = status_code
+        super().__init__(message)
+
+
+def _http_error(exc: requests.HTTPError) -> NoReturn:
     resp = exc.response
-    status = resp.status_code if resp is not None else "?"
+    status = resp.status_code if resp is not None else 0
     try:
         detail = resp.json().get("detail", resp.text[:200])
     except Exception:
         detail = str(exc)
-    console.print(f"[bold red]HTTP {status}:[/] {detail}")
-    sys.exit(1)
+    raise MealieHTTPError(status, detail)
 
 
 # ---------------------------------------------------------------------------

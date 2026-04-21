@@ -7,7 +7,6 @@ Shows a ranked results table and lets you drill into a single result.
 
 from __future__ import annotations
 
-import sys
 
 import click
 

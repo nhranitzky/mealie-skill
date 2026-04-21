@@ -106,10 +106,12 @@ def _read_json_from_file(path: Path) -> dict | list:
 
 @click.command("import-json")
 @click.argument("file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--tag", "-t", "tags", multiple=True,
+              help="Assign a tag to the imported recipe (repeatable).")
 @click.option("--open", "-o", "show_detail", is_flag=True, default=False,
               help="Show full recipe detail after import.")
 @click.option("--json", "as_json", is_flag=True, default=False)
-def import_json(file: Path, show_detail: bool, as_json: bool):
+def import_json(file: Path, tags: tuple[str, ...], show_detail: bool, as_json: bool):
     """
     Import a recipe from a local schema.org/Recipe JSON file into Mealie.
 
@@ -125,7 +127,7 @@ def import_json(file: Path, show_detail: bool, as_json: bool):
     \b
     Examples:
         mealie import-json recipe.json
-        mealie import-json recipe.jsonld --open
+        mealie import-json recipe.jsonld --tag Imported --open
         mealie import-json saved_page.html --json
     """
     client = MealieClient()
@@ -137,7 +139,7 @@ def import_json(file: Path, show_detail: bool, as_json: bool):
     # Mealie expects {"data": "<serialised-json-string>"}
     # The server parses the string as schema.org JSON internally
     data_string = json.dumps(raw_content, ensure_ascii=False)
-    body = {"data": data_string}
+    body: dict = {"data": data_string}
 
     console.print("[dim]Sending to Mealie (POST /api/recipes/create/html-or-json) …[/]")
     result = client.post("/recipes/create/html-or-json", body)
@@ -149,6 +151,12 @@ def import_json(file: Path, show_detail: bool, as_json: bool):
         slug = result.get("slug") or result.get("id") or str(result)
     else:
         slug = str(result)
+
+    if tags:
+        existing = client.get(f"/recipes/{slug}")
+        existing_tags = existing.get("tags") or []
+        new_tags = existing_tags + [{"name": t} for t in tags]
+        client.patch(f"/recipes/{slug}", {"tags": new_tags})
 
     if as_json:
         output_json({"file": str(file), "slug": slug})

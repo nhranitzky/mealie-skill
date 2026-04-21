@@ -11,7 +11,7 @@ import sys
 
 import click
 
-from scripts.utils import console, MealieClient, print_recipe_detail, output_json
+from scripts.utils import console, MealieClient, MealieHTTPError, print_recipe_detail, output_json
 
 
 def _find_recipe(client: MealieClient, identifier: str) -> dict:
@@ -23,8 +23,10 @@ def _find_recipe(client: MealieClient, identifier: str) -> dict:
     # Try as slug directly
     try:
         return client.get(f"/recipes/{identifier}")
-    except SystemExit:
-        pass  # 404 – try search instead
+    except MealieHTTPError as exc:
+        if exc.status_code != 404:
+            raise
+        # 404 – fall through to name search
 
     # Search by name
     data = client.get("/recipes", {"search": identifier, "perPage": 5})

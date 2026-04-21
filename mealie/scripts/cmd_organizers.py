@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import click
 from rich.table import Table
-from rich.columns import Columns
 from rich import box
 
 from scripts.utils import console, MealieClient, recipe_list_table, output_json

@@ -6,7 +6,7 @@ Usage:
     mealie detail      <slug-or-name>
     mealie search      <query>   [--category …] [--tag …] [--open]
     mealie import      <url>     [--tag …] [--open]
-    mealie import-json <file>    [--tag …] [--open] [--dry-run]
+    mealie import-json <file>    [--tag …] [--open]
     mealie random      [--category …] [--tag …] [--count N] [--open]
     mealie mealplan    show|add|remove|random
     mealie shopping    lists|show|add|recipe|clear
@@ -17,8 +17,11 @@ All commands support --json for machine-readable output.
 Credentials are loaded from .env and never forwarded to any LLM.
 """
 
+import sys
+
 import click
 
+from scripts.utils          import MealieHTTPError, console
 from scripts.cmd_list       import list_recipes
 from scripts.cmd_detail     import detail
 from scripts.cmd_search     import search
@@ -52,4 +55,8 @@ cli.add_command(organizers)
 cli.add_command(stats)
 
 if __name__ == "__main__":
-    cli()
+    try:
+        cli()
+    except MealieHTTPError as exc:
+        console.print(f"[bold red]HTTP {exc.status_code}:[/] {exc}")
+        sys.exit(1)

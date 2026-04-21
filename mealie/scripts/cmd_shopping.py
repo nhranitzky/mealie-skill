@@ -73,7 +73,7 @@ def show_list(list_id: str, checked: bool, as_json: bool):
     params = {"perPage": 200, "orderBy": "position"}
     if not checked:
         params["checked"] = "false"
-    data   = client.get(f"/households/shopping/items", {**params, "shoppingListId": list_id})
+    data   = client.get("/households/shopping/items", {**params, "shoppingListId": list_id})
     items  = data.get("items", [])
 
     if as_json:

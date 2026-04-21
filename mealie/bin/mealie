@@ -23,7 +23,7 @@
 # =============================================================================
 
 set -euo pipefail
-
+unset VIRTUAL_ENV
 # Resolve the real directory of this script, following symlinks
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 
