@@ -1,0 +1,14 @@
+[project]
+name = "mealie-cli"
+version = "0.1.0"
+description = "CLI for Mealie recipe management"
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.12",
+    "rich>=13.7",
+    "pydantic>=2.7",
+    "httpx>=0.27",
+]
+
+[tool.uv]
+package = false

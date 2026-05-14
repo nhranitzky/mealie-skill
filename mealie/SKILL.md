@@ -1,95 +1,188 @@
 ---
 name: mealie
-description: Interact with a self-hosted Mealie recipe server via its REST API. Use this skill whenever the user wants to list, search, or browse recipes; view a specific recipe (ingredients, instructions, metadata); import a recipe from a website URL; manage the meal plan (view, add, remove entries); manage shopping lists (view, add items, link recipes); or browse categories, tags, and cookbooks.
+description: >
+  Use this skill to interact with the self-hosted Mealie recipe server.
+  Trigger when the user wants to search, list, or browse recipes, get details
+  of a specific recipe, import a recipe from a URL or JSON file, get a random
+  recipe suggestion, view recipe statistics, or browse categories, tags, and
+  cookbooks. Always use --output json.
+version: 1.0.0
+author: N.Hranitzky
 license: MIT
-metadata: { "openclaw": {"emoji": "🍽️" } }
+required_environment_variables:
+  - name: MEALIE_URL
+    prompt: "Base URL of your Mealie instance"
+    help: "Example: https://mealie.example.com"
+    required_for: "All commands"
+  - name: MEALIE_API_TOKEN
+    prompt: "Mealie API token"
+    help: "Create one in Mealie under Settings → API Tokens"
+    required_for: "All commands"
+metadata:
+  hermes:
+    tags: [mealie, recipes]
 ---
 
-# Mealie Skill
+# mealie Skill
 
-Manage a self-hosted [Mealie](https://mealie.io) instance from the terminal.
+CLI interface to the self-hosted [Mealie](https://mealie.io) recipe server.
 
-## ⚠️ Credential Security
+**Always pass `--output json`** so the output is machine-readable.
 
-The URL and Token are provided by the environment as environment variables.
- **never** display, log, or relay these values. 
+---
 
-## Available Commands
+## List Recipes
 
-`{baseDir}` is the directory of this skill file.
+Browse all recipes, optionally filtered by category or tag.
 
-| Command | User asks |
-|---------|-------------|
-| `{baseDir}/bin/mealie list` | List recipes with filtering and sorting |
-| `{baseDir}/bin/mealie detail <slug>` | Full recipe: ingredients, instructions, metadata |
-| `{baseDir}/bin/mealie search <query>` | Full-text search with optional category/tag filters |
-| `{baseDir}/bin/mealie import <url>` | Scrape & import a recipe from any supported website |
-| `{baseDir}/bin/mealie import-json <file>` | Import one or more recipes from a schema.org/Recipe JSON file |
-| `{baseDir}/bin/mealie random` | Random recipe suggestion from the collection |
-| `{baseDir}/bin/mealie mealplan show` | Display the current week's meal plan |
-| `{baseDir}/bin/mealie mealplan add <date> <slug>` | Add a recipe to the meal plan |
-| `{baseDir}/bin/mealie mealplan remove <entry-id>` | Remove a meal plan entry |
-| `{baseDir}/bin/mealie mealplan random <date>` | Insert a random recipe into the meal plan |
-| `{baseDir}/bin/mealie shopping lists` | Show all shopping lists |
-| `{baseDir}/bin/mealie shopping show <list-id>` | Show items in a shopping list |
-| `{baseDir}/bin/mealie shopping add <list-id> <item>` | Add a text item |
-| `{baseDir}/bin/mealie shopping recipe <list-id> <slug>` | Add all ingredients of a recipe |
-| `{baseDir}/bin/mealie shopping check <item-id>` | Toggle an item's checked state |
-| `{baseDir}/bin/mealie shopping clear <list-id>` | Remove checked (or all) items |
-| `{baseDir}/bin/mealie organizers categories` | List all categories |
-| `{baseDir}/bin/mealie organizers tags` | List all tags |
-| `{baseDir}/bin/mealie organizers cookbooks` | List all cookbooks |
-| `{baseDir}/bin/mealie organizers cookbook <slug>` | Show recipes in a cookbook |
-| `{baseDir}/bin/mealie stats` | Collection statistics + server version |
-
-All commands support `--json` for machine-readable output.
-
-## Key Common Options
-
-| Option | Description |
-|--------|-------------|
-| `--json` | Emit sanitised JSON (no tokens) instead of Rich tables |
-| `--category / -c` | Filter by category name |
-| `--tag / -t` | Filter by tag name |
-| `--limit / -n` | Max rows to return |
-| `--open / -o` | Auto-open full detail for a single result |
-
-## Example Invocations
+### Examples
 
 ```bash
-# Browse & search
-{baseDir}/bin/mealie list --category "Suppen" --sort rating --desc
-{baseDir}/bin/mealie search "Pasta" --tag schnell --open
-{baseDir}/bin/mealie detail carbonara
+# All recipes (default page size 25)
+${HERMES_SKILL_DIR}/bin/mealie-cli list --output json
 
-# Import
-{baseDir}/bin/mealie import https://www.chefkoch.de/rezepte/123/Spaghetti.html --tag Italian
-{baseDir}/bin/mealie import https://example.com/recipe --open
-{baseDir}/bin/mealie import-json recipe.json --tag Imported --open
-{baseDir}/bin/mealie import-json export.jsonld --tag Vegan
-{baseDir}/bin/mealie import-json page.html --json
+# Fetch every recipe at once
+${HERMES_SKILL_DIR}/bin/mealie-cli list --all --output json
 
-# Meal planning
-{baseDir}/bin/mealie mealplan show
-{baseDir}/bin/mealie mealplan add 2024-06-10 pasta-carbonara --type dinner
-{baseDir}/bin/mealie mealplan random 2024-06-11 --type lunch
+# Filter by category
+${HERMES_SKILL_DIR}/bin/mealie-cli list --category "Italian" --output json
 
-# Shopping lists
-{baseDir}/bin/mealie shopping lists
-{baseDir}/bin/mealie shopping show <list-id>
-{baseDir}/bin/mealie shopping recipe <list-id> spaghetti-bolognese
-{baseDir}/bin/mealie shopping add <list-id> "Olive oil" --qty 1 --unit bottle
+# Filter by tag, sorted descending by name
+${HERMES_SKILL_DIR}/bin/mealie-cli list --tag "vegan" --desc --output json
 
-# Discovery
-{baseDir}/bin/mealie random --category Italian --count 3
-{baseDir}/bin/mealie organizers categories
-{baseDir}/bin/mealie stats
+# Paginate manually
+${HERMES_SKILL_DIR}/bin/mealie-cli list --page 2 --limit 10 --output json
 ```
 
-## How Openclaw Should Use This Skill
+---
 
-1. Identify the intent: list / search / detail / import / meal plan / shopping / organizers.
-2. Extract parameters (query, slug, URL, date, list ID) from the user's message.
-3. Run the appropriate `{baseDir}/bin/mealie` command.
-4. **Never reveal** `MEALIE_URL` or `MEALIE_API_TOKEN` in any response.
-5. Summarise the output; for `--json` responses, extract key fields.
+## Search Recipes
+
+Full-text search across all recipes.
+
+### Examples
+
+```bash
+# Simple search
+${HERMES_SKILL_DIR}/bin/mealie-cli search "pasta" --output json
+
+# Search within a category
+${HERMES_SKILL_DIR}/bin/mealie-cli search "soup" --category "Asian" --output json
+
+# Search with tag filter, limit results
+${HERMES_SKILL_DIR}/bin/mealie-cli search "cake" --tag "dessert" --limit 5 --output json
+```
+
+---
+
+## Recipe Detail
+
+Show full details of a recipe (ingredients, steps, metadata). Accepts a slug or a partial name — if multiple matches are found, the CLI lists them.
+
+### Examples
+
+```bash
+# By slug
+${HERMES_SKILL_DIR}/bin/mealie-cli detail spaghetti-carbonara --output json
+
+# By partial name (auto-resolves if unique)
+${HERMES_SKILL_DIR}/bin/mealie-cli detail "carbonara" --output json
+```
+
+---
+
+## Import Recipe from URL
+
+Scrape and import a recipe directly from a website URL.
+
+### Examples
+
+```bash
+${HERMES_SKILL_DIR}/bin/mealie-cli import https://www.example.com/recipes/lasagne --output json
+
+# Import and assign tags
+${HERMES_SKILL_DIR}/bin/mealie-cli import https://www.example.com/recipes/lasagne --tag italian --tag pasta --output json
+```
+
+---
+
+## Import Recipe from File
+
+Import a recipe from a local `schema.org/Recipe` JSON file or an HTML file containing a `<script type="application/ld+json">` block.
+
+### Examples
+
+```bash
+# From a JSON file
+${HERMES_SKILL_DIR}/bin/mealie-cli import-json /tmp/recipe.json --output json
+
+# From an HTML file saved locally
+${HERMES_SKILL_DIR}/bin/mealie-cli import-json /tmp/recipe.html --tag homemade --output json
+```
+
+---
+
+## Random Recipe
+
+Pick one or more random recipes from the collection, optionally filtered.
+
+### Examples
+
+```bash
+# One random recipe
+${HERMES_SKILL_DIR}/bin/mealie-cli random --output json
+
+# Three random recipes from a specific tag
+${HERMES_SKILL_DIR}/bin/mealie-cli random --tag "quick" --count 3 --output json
+
+# Random from a category
+${HERMES_SKILL_DIR}/bin/mealie-cli random --category "Soup" --output json
+```
+
+---
+
+## Statistics
+
+Show an overview of the recipe collection: total counts, top categories, top tags, server version.
+
+### Examples
+
+```bash
+${HERMES_SKILL_DIR}/bin/mealie-cli stats --output json
+
+# Limit top-N lists
+${HERMES_SKILL_DIR}/bin/mealie-cli stats --top 5 --output json
+```
+
+---
+
+## Organizers
+
+Browse categories, tags, and cookbooks.
+
+### Examples
+
+```bash
+# List all categories
+${HERMES_SKILL_DIR}/bin/mealie-cli organizers categories --output json
+
+# List all tags
+${HERMES_SKILL_DIR}/bin/mealie-cli organizers tags --output json
+
+# List all cookbooks
+${HERMES_SKILL_DIR}/bin/mealie-cli organizers cookbooks --output json
+
+# Show recipes in a specific cookbook
+${HERMES_SKILL_DIR}/bin/mealie-cli organizers cookbook my-favorites --output json
+```
+
+---
+
+## Pitfalls
+
+- **Missing env vars** — If `MEALIE_URL` or `MEALIE_API_TOKEN` is not set, the CLI exits immediately with an error. Never continue without both variables present.
+- **Token format** — `MEALIE_API_TOKEN` must be a Bearer token created in Mealie under *Settings → API Tokens*. Do not use the login password.
+- **Slug vs. name** — `detail` accepts a slug (e.g. `spaghetti-carbonara`) or a partial name. If the partial name matches multiple recipes, the CLI prompts interactively — in automated use always prefer the exact slug.
+- **`--all` is slow** — `list --all` fetches every recipe page-by-page. On large collections this can take several seconds. Use `--search` or filters to narrow down first.
+- **URL import may fail** — Not every website supports schema.org scraping. If `import` returns an error, save the page as HTML and use `import-json` instead.
+- **JSON output only** — Always pass `--output json`. Without it, the CLI outputs rich-text tables that are not parseable.

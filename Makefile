@@ -1,40 +1,35 @@
-include .env
+-include .env
 
-SKILL_DIR  := mealie	
+SKILL_DIR  := mealie
 SKILL_NAME := $(notdir $(abspath $(SKILL_DIR)))
-VERSION=1.0
-DIST_DIR      := dist
-SKILL_ZIP_NAME := $(SKILL_NAME).skill_v$(VERSION).zip
+VERSION    := 1.0.0
+DIST_DIR   := dist
+SKILL_ZIP  := $(DIST_DIR)/$(SKILL_NAME).skill_v$(VERSION).zip
 
+HERMES_HOST         ?= pi@openclaw.local
+HERMES_SKILL_REPO_DIR ?= /home/pi/downloads/skills
 
-.PHONY: install lint package clean
-
-install:          ## Install all dependencies (dev + skill)
-	(cd $(SKILL_DIR) && uv sync)
-
-lint:             ## Check code style
-	uv run ruff check $(SKILL_DIR)/scripts
+.PHONY: package to-repo clean help
 
 package:          ## Build .skill zip into dist/
 	mkdir -p $(DIST_DIR)
-	(cd $(dir $(abspath $(SKILL_DIR))) && \
-	 zip -r $(SKILL_ZIP_NAME) $(SKILL_NAME)/ -x "*.venv*" -x "*.zip" -x "*/__pycache__/*" -x ".pytest_cache" -x "*.lock" -x "*.DS_Store" -x "*/.ruff_cache/*")
-	mv $(SKILL_ZIP_NAME) $(DIST_DIR)/
-	@echo "Created: $(DIST_DIR)/$(SKILL_ZIP_NAME)"
+	zip -r $(SKILL_ZIP) $(SKILL_DIR)/ \
+	  --exclude "*.venv*" \
+	  --exclude "*.zip" \
+	  --exclude "*/__pycache__/*" \
+	  --exclude "*/.pytest_cache/*" \
+	  --exclude "*.DS_Store" \
+	  --exclude "*/uv.lock"
+	@echo "Created: $(SKILL_ZIP)"
+
+to-repo: package  ## Package and copy skill zip to remote HERMES_HOST:HERMES_SKILL_REPO_DIR
+	scp $(SKILL_ZIP) $(HERMES_HOST):$(HERMES_SKILL_REPO_DIR)/
+	@echo "Deployed to $(HERMES_HOST):$(HERMES_SKILL_REPO_DIR)/"
 
 clean:            ## Remove build artifacts
 	rm -rf $(DIST_DIR)
-	rm -f *.skill *.zip
 	find . -type d -name __pycache__ -exec rm -rf {} +
-	find . -type d -name .pytest_cache -exec rm -rf {} +
- 
-	rm -rf $(SKILL_DIR)/.venv  
-	rm $(SKILL_DIR)/uv.lock	
-
-deploy:           ## Deploy skill zip to Openclaw device
-	scp $(DIST_DIR)/$(SKILL_ZIP_NAME) $(TARGET):$(REMOTE_DOWNLOADS_DIR)
-	  
-
+	find . -type d -name .venv -exec rm -rf {} +
 
 help:             ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
