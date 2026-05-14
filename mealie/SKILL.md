@@ -5,8 +5,7 @@ description: >
   Trigger when the user wants to search, list, or browse recipes, get details
   of a specific recipe, import a recipe from a URL or JSON file, get a random
   recipe suggestion, view recipe statistics, or browse categories, tags, and
-  cookbooks. Always use --output json.
-version: 1.0.0
+  cookbooks.  
 author: N.Hranitzky
 license: MIT
 required_environment_variables:
